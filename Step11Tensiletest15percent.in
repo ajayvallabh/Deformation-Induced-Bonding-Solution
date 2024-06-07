@@ -1,0 +1,88 @@
+# Plastic Deformation
+#---------------Run a few steps to completely equilibrate system--#
+
+units           lj
+boundary        p p f
+atom_style      bond
+bond_style      quartic
+read_data       run_deformed15percentEq.data
+pair_style      lj/cut 2.5
+pair_modify     shift yes
+pair_coeff * * 1 1 2.5
+
+#-------------------Data read and Pair initialize-------------------#
+pair_modify     shift yes mix geometric
+special_bonds   lj/coul 1.0 1.0 1.0
+
+#--------------------Variable Definitions---------------------------#
+
+variable ts equal step
+variable tconst equal 200*dt
+variable zl1 equal -17.5
+variable zl2 equal 15.2934
+variable zh1 equal 65.2934
+variable zh2 equal 98
+#------------------------Region---Define----------------------#
+region downbox block INF INF INF INF ${zl1} ${zl2}
+region upbox block INF INF INF INF ${zh1} ${zh2}  
+group upper region upbox
+group lower region downbox
+group cliped union upper lower
+group middle subtract all cliped
+## Radius of Gyration
+compute 	cc1 all chunk/atom molecule
+compute gyr all gyration/chunk cc1 
+variable Rgave equal ave(c_gyr) 
+#------------Calculate Stress---------------------#
+compute mystress middle stress/atom NULL 
+compute reducedstress middle reduce sum c_mystress[3]
+variable middlevolume equal 69.6614*59.663*50
+variable stress equal (c_reducedstress)/(${middlevolume})
+variable strain equal (step-10000)*0.005*0.01/50  # X=v*t that t=step*timestep so X=v.step.timestep velocity will be twice 0.005+0.005=0.01 both direction
+compute myTemp middle temp
+variable middtemp equal c_myTemp
+#--------------------Initialize-------------------------------------#
+
+thermo_style    custom step time temp v_middtemp press pxx pyy  pzz etotal epair density v_Rgave lx ly lz
+thermo          1000
+neighbor        0.4 bin
+neigh_modify    every 1 delay 0 check yes
+#-------------------Equilirium--------------------------#
+timestep	0.005 
+dump 3 all custom 1000 dump.lammps* id type x y z xu yu zu
+fix wallhi all wall/lj126 zhi EDGE 1.0 1.0 1.5 units box
+fix walllo all wall/lj126 zlo EDGE 1.0 1.0 1.5 units box
+fix 1 all npt temp 0.3 0.3 0.1 x 0.0 0.0 5
+fix 2 all momentum 10000 linear 1 1 1
+restart 10000 archive_restart_eq.* 
+run 10000
+unfix 1
+unfix 2
+undump 3
+#--------------------Movement-with-contant-velocity in +z and -z direction----------#
+#-----------------velocity=Strain-rate* initial length-------------#
+velocity upper set 0 0 0.005 units box
+velocity lower set 0 0 -0.005 units box
+fix 2 upper setforce 0 0 0
+fix 4 lower setforce 0 0 0
+
+#----------------- Main-Run-Relax-0%--------------------#
+thermo_style    custom step time temp v_middtemp press pxx pyy  pzz etotal epair density v_Rgave lx ly lz v_stress v_strain
+timestep	0.005 
+fix 1 middle nvt temp 0.3 0.3 0.5
+fix 5 all momentum 100000 linear 1 1 1
+fix 7 cliped nve
+dump 8 all custom 40000 dumpslow.lammpstrj* id type x y z xu yu zu
+restart 1000000 archive_restart_eq.* 
+run 8000000
+write_restart run_deformed15percentTensile.*
+write_data    run_deformed15percentTensile.data
+#----------Write/unfix/delete -------------------------------------#
+
+unfix 1
+unfix 2
+unfix 5
+variable tconst delete
+variable ts delete
+variable ramph delete
+variable rampl delete

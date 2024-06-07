@@ -1,0 +1,143 @@
+# Plastic Deformation
+#---------------Run a few steps to completely equilibrate system--#
+
+units           lj
+boundary        p p f
+atom_style      bond
+bond_style      fene
+read_data       run_quenchTwoboxEq.data
+pair_style      lj/cut 2.5
+pair_modify     shift yes
+pair_coeff * * 1 1 2.5
+
+#-------------------Data read and Pair initialize-------------------#
+
+pair_modify     shift yes mix geometric
+special_bonds   fene
+
+#--------------------Variable Definitions---------------------------#
+
+variable ts equal step
+variable tconst equal 2000*dt
+
+## Radius of Gyration
+compute 	cc1 all chunk/atom molecule
+compute gyr all gyration/chunk cc1 
+variable Rgave equal ave(c_gyr)
+
+#--------------------Initialize-------------------------------------#
+
+thermo_style    custom step time temp press pxx pyy  pzz etotal pe density v_Rgave lx ly lz 
+thermo          2000
+neighbor        0.4 bin
+neigh_modify    every 1 delay 0 check yes
+
+#----------------- Main-Run-Compresed-5%--------------------#
+timestep	0.0005 
+dump 3 all custom 1000 dump.lammps* id type mol x y z xu yu zu ix iy iz 
+variable ramph equal ramp(105.455181,101.250098)
+fix wallhi all wall/lj126 zhi v_ramph 1.0 1.0 1.5 units box pbc no
+variable rampl equal ramp(-24.49830,-20.29322)
+fix walllo all wall/lj126 zlo v_rampl 1.0 1.0 1.5 units box pbc no
+fix 1 all npt temp 0.3 0.3 0.05 x 0.0 0.0 0.5
+fix 2 all momentum 100000 linear 1 1 1
+restart 841000 archive_restart_eq.* 
+run 841000
+write_restart run_deformed5percent.*
+write_data run_deformed5percent.data
+#----------------- Main-Run-Compresed-10%--------------------#
+timestep        0.0005
+variable ramph equal ramp(101.250098,98.045016)
+fix wallhi all wall/lj126 zhi v_ramph 1.0 1.0 1.5 units box pbc no
+variable rampl equal ramp(-20.29322,-17.088138)
+fix walllo all wall/lj126 zlo v_rampl 1.0 1.0 1.5 units box pbc no
+fix 1 all npt temp 0.3 0.3 0.05 x 0.0 0.0 0.5
+fix 2 all momentum 100000 linear 1 1 1
+restart 641000 archive_restart_eq.*
+run 641000
+write_restart run_deformed10percent.*
+write_data run_deformed10percent.data
+#----------------- Main-Run-Compresed-15%--------------------#
+timestep        0.0005
+variable ramph equal ramp(98.045016,94.83993)
+fix wallhi all wall/lj126 zhi v_ramph 1.0 1.0 1.5 units box pbc no
+variable rampl equal ramp(-17.088138,-13.883055)
+fix walllo all wall/lj126 zlo v_rampl 1.0 1.0 1.5 units box pbc no
+fix 1 all npt temp 0.3 0.3 0.05 x 0.0 0.0 0.5
+fix 2 all momentum 100000 linear 1 1 1
+restart 641000 archive_restart_eq.*
+run 641000
+write_restart run_deformed15percent.*
+write_data    run_deformed15percent.data
+#----------------- Main-Run-Compresed-20%--------------------#
+timestep        0.0005
+variable ramph equal ramp(94.83993,91.63485)
+fix wallhi all wall/lj126 zhi v_ramph 1.0 1.0 1.5 units box pbc no
+variable rampl equal ramp(-13.883055,-10.67797)
+fix walllo all wall/lj126 zlo v_rampl 1.0 1.0 1.5 units box pbc no
+fix 1 all npt temp 0.3 0.3 0.05 x 0.0 0.0 0.5
+fix 2 all momentum 100000 linear 1 1 1
+restart 641000 archive_restart_eq.*
+run 641000
+write_restart run_deformed20percent.*
+write_data    run_deformed20percent.data
+
+#----------------- Main-Run-Compresed-25%--------------------#
+timestep        0.0005
+variable ramph equal ramp(91.63485,88.42976)
+fix wallhi all wall/lj126 zhi v_ramph 1.0 1.0 1.5 units box pbc no
+variable rampl equal ramp(-10.67797,-7.47289)
+fix walllo all wall/lj126 zlo v_rampl 1.0 1.0 1.5 units box pbc no
+fix 1 all npt temp 0.3 0.3 0.05 x 0.0 0.0 0.5
+fix 2 all momentum 100000 linear 1 1 1
+restart 641000 archive_restart_eq.*
+run 641000
+write_restart run_deformed25percent.*
+write_data run_deformed25percent.data
+#----------------- Main-Run-Compresed-30%--------------------#
+timestep        0.0005
+variable ramph equal ramp(88.42976,85.22468)
+fix wallhi all wall/lj126 zhi v_ramph 1.0 1.0 1.5 units box pbc no
+variable rampl equal ramp(-7.47289,-4.267808)
+fix walllo all wall/lj126 zlo v_rampl 1.0 1.0 1.5 units box pbc no
+fix 1 all npt temp 0.3 0.3 0.05 x 0.0 0.0 0.5
+fix 2 all momentum 100000 linear 1 1 1
+restart 641000 archive_restart_eq.*
+run 641000
+write_restart run_deformed30percent.*
+write_data run_deformed30percent.data
+
+#----------------- Main-Run-Compresed-35%--------------------#
+timestep        0.0005
+variable ramph equal ramp(85.22468,82.01960)
+fix wallhi all wall/lj126 zhi v_ramph 1.0 1.0 1.5 units box pbc no
+variable rampl equal ramp(-4.267808,-1.0627255)
+fix walllo all wall/lj126 zlo v_rampl 1.0 1.0 1.5 units box pbc no
+fix 1 all npt temp 0.3 0.3 0.05 x 0.0 0.0 0.5
+fix 2 all momentum 100000 linear 1 1 1
+restart 641000 archive_restart_eq.*
+run 641000
+write_restart run_deformed35percent.*
+write_data    run_deformed35percent.data
+
+#----------------- Main-Run-Compresed-40%--------------------#
+timestep        0.0005
+variable ramph equal ramp(82.01960,78.81452)
+fix wallhi all wall/lj126 zhi v_ramph 1.0 1.0 1.5 units box pbc no
+variable rampl equal ramp(-1.0627255,2.142357)
+fix walllo all wall/lj126 zlo v_rampl 1.0 1.0 1.5 units box pbc no
+fix 1 all npt temp 0.3 0.3 0.05 x 0.0 0.0 0.5
+fix 2 all momentum 100000 linear 1 1 1
+restart 641000 archive_restart_eq.*
+run 641000
+write_restart run_deformed40percent.*
+write_data    run_deformed40percent.data
+
+#----------Write/unfix/delete -------------------------------------#
+
+unfix 1
+unfix 2
+variable tconst delete
+variable ts delete
+variable ramph delete
+variable rampl delete
